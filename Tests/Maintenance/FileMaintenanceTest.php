@@ -79,7 +79,7 @@ class FileMaintenanceTest extends TestCase
 
         $fileM->unlock();
 
-        $this->assertFileNotExists($options['file_path']);
+        $this->assertFileDoesNotExist($options['file_path']);
     }
 
     public function testIsExists()

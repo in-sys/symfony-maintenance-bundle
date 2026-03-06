@@ -9,8 +9,6 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 use INSYS\Bundle\MaintenanceBundle\Drivers\MemCacheDriver;
 
-use Symfony\Bundle\FrameworkBundle\Translation\Translator;
-
 /**
  * Test mem cache
  *

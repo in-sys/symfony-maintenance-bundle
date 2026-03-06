@@ -2,11 +2,11 @@
 
 namespace INSYS\Bundle\MaintenanceBundle\DependencyInjection;
 
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 
 /**
  * This is the class that loads and manages your bundle configuration
@@ -21,14 +21,14 @@ class INSYSMaintenanceExtension extends Extension
     /**
      * {@inheritDoc}
      */
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.xml');
-        $loader->load('database.xml');
+        $loader = new PhpFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader->load('services.php');
+        $loader->load('database.php');
 
         if (isset($config['driver']['ttl'])) {
             $config['driver']['options']['ttl'] = $config['driver']['ttl'];
@@ -48,7 +48,7 @@ class INSYSMaintenanceExtension extends Extension
         $container->setParameter('insys_maintenance.response.exception_message', $config['response']['exception_message']);
 
         if (isset($config['driver']['options']['dsn'])) {
-            $this->registerDsnconfiguration($config['driver']['options']);
+            $this->registerDsnConfiguration($config['driver']['options']);
         }
     }
 

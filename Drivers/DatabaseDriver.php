@@ -2,7 +2,7 @@
 
 namespace INSYS\Bundle\MaintenanceBundle\Drivers;
 
-use Doctrine\Bundle\DoctrineBundle\Registry;
+use Doctrine\Persistence\ManagerRegistry;
 use INSYS\Bundle\MaintenanceBundle\Drivers\Query\DefaultQuery;
 use INSYS\Bundle\MaintenanceBundle\Drivers\Query\DsnQuery;
 
@@ -15,7 +15,7 @@ use INSYS\Bundle\MaintenanceBundle\Drivers\Query\DsnQuery;
 class DatabaseDriver extends AbstractDriver implements DriverTtlInterface
 {
     /**
-     * @var Registry
+     * @var ManagerRegistry|null
      */
     protected $doctrine;
 
@@ -30,17 +30,16 @@ class DatabaseDriver extends AbstractDriver implements DriverTtlInterface
     protected $db;
 
     /**
-     *
-     * @var PdoDriver
+     * @var Query\PdoQuery|null
      */
     protected $pdoDriver;
 
     /**
      * Constructor
      *
-     * @param Registry $doctrine The registry
+     * @param ManagerRegistry|null $doctrine The registry
      */
-    public function __construct(Registry $doctrine = null)
+    public function __construct(?ManagerRegistry $doctrine = null)
     {
         $this->doctrine = $doctrine;
     }
@@ -57,11 +56,11 @@ class DatabaseDriver extends AbstractDriver implements DriverTtlInterface
         if (isset($this->options['dsn'])) {
             $this->pdoDriver = new DsnQuery($this->options);
         } else {
-            if (isset($this->options['connection'])) {
-                $this->pdoDriver = new DefaultQuery($this->doctrine->getManager($this->options['connection']));
-            } else {
-                $this->pdoDriver = new DefaultQuery($this->doctrine->getManager());
-            }
+            /** @var \Doctrine\ORM\EntityManagerInterface $em */
+            $em = isset($this->options['connection'])
+                ? $this->doctrine->getManager($this->options['connection'])
+                : $this->doctrine->getManager();
+            $this->pdoDriver = new DefaultQuery($em);
         }
     }
 
@@ -112,7 +111,7 @@ class DatabaseDriver extends AbstractDriver implements DriverTtlInterface
         $data = $this->pdoDriver->selectQuery($db);
 
         if (!$data) {
-            return null;
+            return false;
         }
 
         if (null !== $data[0]['ttl']) {

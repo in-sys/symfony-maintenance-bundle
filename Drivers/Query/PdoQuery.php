@@ -2,8 +2,6 @@
 
 namespace INSYS\Bundle\MaintenanceBundle\Drivers\Query;
 
-use Doctrine\ORM\EntityManager;
-
 /**
  * Abstract class to handle PDO connection
  *
@@ -13,7 +11,7 @@ use Doctrine\ORM\EntityManager;
 abstract class PdoQuery
 {
     /**
-     * @var \PDO
+     * @var \PDO|\Doctrine\DBAL\Connection|null
      */
     protected $db;
 
@@ -42,7 +40,7 @@ abstract class PdoQuery
     /**
      * Result of delete query
      *
-     * @param \PDO $db PDO instance
+     * @param \PDO|\Doctrine\DBAL\Connection $db PDO or DBAL connection instance
      *
      * @return boolean
      */
@@ -51,7 +49,7 @@ abstract class PdoQuery
     /**
      * Result of select query
      *
-     * @param \PDO $db PDO instance
+     * @param \PDO|\Doctrine\DBAL\Connection $db PDO or DBAL connection instance
      *
      * @return array
      */
@@ -60,8 +58,8 @@ abstract class PdoQuery
     /**
      * Result of insert query
      *
-     * @param integer $ttl ttl value
-     * @param \PDO    $db  PDO instance
+     * @param string|null                   $ttl ttl value
+     * @param \PDO|\Doctrine\DBAL\Connection $db  PDO or DBAL connection instance
      *
      * @return boolean
      */
@@ -70,16 +68,16 @@ abstract class PdoQuery
     /**
      * Initialize pdo connection
      *
-     * @return \PDO
+     * @return \PDO|\Doctrine\DBAL\Connection
      */
     abstract function initDb();
 
     /**
      * Execute sql
      *
-     * @param \PDO   $db    PDO instance
-     * @param string $query Query
-     * @param array  $args  Arguments
+     * @param \PDO|\Doctrine\DBAL\Connection $db    PDO or DBAL connection instance
+     * @param string                         $query Query
+     * @param array                          $args  Arguments
      *
      * @return boolean
      *
@@ -87,10 +85,14 @@ abstract class PdoQuery
      */
     protected function exec($db, $query, array $args = array())
     {
+        if ($db instanceof \Doctrine\DBAL\Connection) {
+            return $db->executeStatement($query, $args) > 0;
+        }
+
         $stmt = $this->prepareStatement($db, $query);
 
         foreach ($args as $arg => $val) {
-            $stmt->bindValue($arg, $val, is_int($val) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
+            $stmt->bindValue($arg, $val, $this->getPdoParamType($val));
         }
 
         $success = $stmt->execute();
@@ -103,12 +105,10 @@ abstract class PdoQuery
     }
 
     /**
-     * PrepareStatement
-     *
-     * @param \PDO   $db    PDO instance
+     * @param \PDO $db PDO instance
      * @param string $query Query
      *
-     * @return Statement
+     * @return \PDOStatement
      *
      * @throws \RuntimeException
      */
@@ -130,22 +130,22 @@ abstract class PdoQuery
     /**
      * Fetch All
      *
-     * @param \PDO   $db    PDO instance
-     * @param string $query Query
-     * @param array  $args  Arguments
+     * @param \PDO|\Doctrine\DBAL\Connection $db    PDO or DBAL connection instance
+     * @param string                         $query Query
+     * @param array                          $args  Arguments
      *
      * @return array
      */
     protected function fetch($db, $query, array $args = array())
     {
-        $stmt = $this->prepareStatement($db, $query);
-
-        if (false === $stmt) {
-            throw new \RuntimeException('The database cannot successfully prepare the statement');
+        if ($db instanceof \Doctrine\DBAL\Connection) {
+            return $db->executeQuery($query, $args)->fetchAllAssociative();
         }
 
+        $stmt = $this->prepareStatement($db, $query);
+
         foreach ($args as $arg => $val) {
-            $stmt->bindValue($arg, $val, is_int($val) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
+            $stmt->bindValue($arg, $val, $this->getPdoParamType($val));
         }
 
         $stmt->execute();
@@ -153,5 +153,16 @@ abstract class PdoQuery
 
         return $return;
     }
-}
 
+    /**
+     * @param mixed $value
+     */
+    private function getPdoParamType($value)
+    {
+        if ($value === null) {
+            return \PDO::PARAM_NULL;
+        }
+
+        return is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR;
+    }
+}
