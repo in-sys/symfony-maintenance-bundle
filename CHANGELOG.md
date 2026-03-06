@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.0](https://github.com/in-sys/symfony-maintenance-bundle/compare/v1.0.2...v2.0.0) (2026-03-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* drops support for older Symfony and PHP versions and updates the bundle to the new compatibility baseline. END_COMMIT_OVERRIDE
+
+### Features
+
+* modernize Symfony compatibility and local dev workflow ([985d8da](https://github.com/in-sys/symfony-maintenance-bundle/commit/985d8daf0f01d945da28aab4180d50a686d6a2a5))
+* Upgrade bundle for Symfony 6.4/7.x and modernize local development workflow ([a147b5d](https://github.com/in-sys/symfony-maintenance-bundle/commit/a147b5d122c52c372afafd820f94f176447df839))
+* upgrade to Symfony 6.4 / 7.x with code quality improvements ([77ee860](https://github.com/in-sys/symfony-maintenance-bundle/commit/77ee8601810e52df302a57c560c28b2856a18432))
+
+
+### Miscellaneous Chores
+
+* release 2.0.0 ([09d0d8e](https://github.com/in-sys/symfony-maintenance-bundle/commit/09d0d8ea87c68904a0a304b55c730d7eaa53a654))
+
 ### [1.0.2](https://www.github.com/in-sys/symfony-maintenance-bundle/compare/v1.0.1...v1.0.2) (2022-02-17)
 
 
