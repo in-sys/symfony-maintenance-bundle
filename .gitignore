@@ -3,6 +3,8 @@ phpunit.xml
 .project
 .buildpath
 .settings
+.idea/
+.serena/
 vendor
 composer.lock
 .phpunit.result.cache

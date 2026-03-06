@@ -8,6 +8,7 @@ use INSYS\Bundle\MaintenanceBundle\Exception\ServiceUnavailableException;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpFoundation\IpUtils;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Listener to decide if user can access to the site
@@ -124,10 +125,10 @@ class MaintenanceListener
         $this->path = $path;
         $this->host = $host;
         $this->ips = $ips;
-        $this->query = $query;
-        $this->cookie = $cookie;
+        $this->query = (array) $query;
+        $this->cookie = (array) $cookie;
         $this->route = $route;
-        $this->attributes = $attributes;
+        $this->attributes = (array) $attributes;
         $this->http_code = $http_code;
         $this->http_status = $http_status;
         $this->http_exception_message = $http_exception_message;
@@ -150,19 +151,19 @@ class MaintenanceListener
         $request = $event->getRequest();
 
         foreach ($this->query as $key => $pattern) {
-            if (!empty($pattern) && preg_match('{'.$pattern.'}', $request->get($key))) {
+            if (!empty($pattern) && preg_match('{'.$pattern.'}', (string) $this->getRequestValue($request, $key))) {
                 return;
             }
         }
 
         foreach ($this->cookie as $key => $pattern) {
-            if (!empty($pattern) && preg_match('{'.$pattern.'}', $request->cookies->get($key))) {
+            if (!empty($pattern) && preg_match('{'.$pattern.'}', (string) $request->cookies->get($key))) {
                 return;
             }
         }
 
         foreach ($this->attributes as $key => $pattern) {
-            if (!empty($pattern) && preg_match('{'.$pattern.'}', $request->attributes->get($key))) {
+            if (!empty($pattern) && preg_match('{'.$pattern.'}', (string) $request->attributes->get($key))) {
                 return;
             }
         }
@@ -179,7 +180,7 @@ class MaintenanceListener
             return;
         }
 
-        $route = $request->get('_route');
+        $route = $request->attributes->get('_route');
         if ((null !== $this->route && null !== $route && preg_match('{'.$this->route.'}', $route)) || (true === $this->debug && null !== $route && '_' === $route[0])) {
             return;
         }
@@ -227,5 +228,22 @@ class MaintenanceListener
         }
 
         return $valid;
+    }
+
+    private function getRequestValue(Request $request, string $key)
+    {
+        if ($request->attributes->has($key)) {
+            return $request->attributes->get($key);
+        }
+
+        if ($request->query->has($key)) {
+            return $request->query->get($key);
+        }
+
+        if ($request->request->has($key)) {
+            return $request->request->get($key);
+        }
+
+        return null;
     }
 }

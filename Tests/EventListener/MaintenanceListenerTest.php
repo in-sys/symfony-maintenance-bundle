@@ -3,6 +3,7 @@
 namespace INSYS\Bundle\MaintenanceBundle\Tests\EventListener;
 
 use INSYS\Bundle\MaintenanceBundle\Drivers\DriverFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\Container;
@@ -158,9 +159,7 @@ class MaintenanceListenerTest extends TestCase
         $this->assertTrue($listener->onKernelRequest($event), 'Restrictive factory should allow on non-matching path and host and matching ips');
     }
 
-    /**
-     * @dataProvider routeProviderWithDebugContext
-     */
+    #[DataProvider('routeProviderWithDebugContext')]
     public function testRouteFilter($debug, $route, $expected)
     {
         $driverOptions = array('class' => DriverFactory::DATABASE_DRIVER, 'options' => null);
@@ -323,11 +322,11 @@ class MaintenanceListenerTest extends TestCase
 
         $db->expects($this->any())
             ->method('isExists')
-            ->will($this->returnValue($lock));
+            ->willReturn($lock);
 
         $db->expects($this->any())
             ->method('decide')
-            ->will($this->returnValue($lock));
+            ->willReturn($lock);
 
         return $db;
     }

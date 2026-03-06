@@ -40,7 +40,7 @@ abstract class PdoQuery
     /**
      * Result of delete query
      *
-     * @param \PDO $db PDO instance
+     * @param \PDO|\Doctrine\DBAL\Connection $db PDO or DBAL connection instance
      *
      * @return boolean
      */
@@ -49,7 +49,7 @@ abstract class PdoQuery
     /**
      * Result of select query
      *
-     * @param \PDO $db PDO instance
+     * @param \PDO|\Doctrine\DBAL\Connection $db PDO or DBAL connection instance
      *
      * @return array
      */
@@ -58,8 +58,8 @@ abstract class PdoQuery
     /**
      * Result of insert query
      *
-     * @param string|null $ttl ttl value
-     * @param \PDO        $db  PDO instance
+     * @param string|null                   $ttl ttl value
+     * @param \PDO|\Doctrine\DBAL\Connection $db  PDO or DBAL connection instance
      *
      * @return boolean
      */
@@ -68,16 +68,16 @@ abstract class PdoQuery
     /**
      * Initialize pdo connection
      *
-     * @return \PDO
+     * @return \PDO|\Doctrine\DBAL\Connection
      */
     abstract function initDb();
 
     /**
      * Execute sql
      *
-     * @param \PDO   $db    PDO instance
-     * @param string $query Query
-     * @param array  $args  Arguments
+     * @param \PDO|\Doctrine\DBAL\Connection $db    PDO or DBAL connection instance
+     * @param string                         $query Query
+     * @param array                          $args  Arguments
      *
      * @return boolean
      *
@@ -85,10 +85,14 @@ abstract class PdoQuery
      */
     protected function exec($db, $query, array $args = array())
     {
+        if ($db instanceof \Doctrine\DBAL\Connection) {
+            return $db->executeStatement($query, $args) > 0;
+        }
+
         $stmt = $this->prepareStatement($db, $query);
 
         foreach ($args as $arg => $val) {
-            $stmt->bindValue($arg, $val, is_int($val) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
+            $stmt->bindValue($arg, $val, $this->getPdoParamType($val));
         }
 
         $success = $stmt->execute();
@@ -101,7 +105,7 @@ abstract class PdoQuery
     }
 
     /**
-     * @param \PDO   $db    PDO instance
+     * @param \PDO $db PDO instance
      * @param string $query Query
      *
      * @return \PDOStatement
@@ -126,23 +130,39 @@ abstract class PdoQuery
     /**
      * Fetch All
      *
-     * @param \PDO   $db    PDO instance
-     * @param string $query Query
-     * @param array  $args  Arguments
+     * @param \PDO|\Doctrine\DBAL\Connection $db    PDO or DBAL connection instance
+     * @param string                         $query Query
+     * @param array                          $args  Arguments
      *
      * @return array
      */
     protected function fetch($db, $query, array $args = array())
     {
+        if ($db instanceof \Doctrine\DBAL\Connection) {
+            return $db->executeQuery($query, $args)->fetchAllAssociative();
+        }
+
         $stmt = $this->prepareStatement($db, $query);
 
         foreach ($args as $arg => $val) {
-            $stmt->bindValue($arg, $val, is_int($val) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
+            $stmt->bindValue($arg, $val, $this->getPdoParamType($val));
         }
 
         $stmt->execute();
         $return = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return $return;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private function getPdoParamType($value)
+    {
+        if ($value === null) {
+            return \PDO::PARAM_NULL;
+        }
+
+        return is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR;
     }
 }

@@ -49,7 +49,7 @@ class DefaultQuery extends PdoQuery
         $platform = $this->em->getConnection()->getDatabasePlatform();
         $type = $platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform ? 'datetime' : 'timestamp';
 
-        $this->db->exec(
+        $this->db->executeStatement(
             sprintf('CREATE TABLE IF NOT EXISTS %s (ttl %s DEFAULT NULL)', self::NAME_TABLE, $type)
         );
     }

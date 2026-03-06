@@ -1,0 +1,13 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.4}
+    working_dir: /app
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./:/app
+    environment:
+      SYMFONY_REQUIRE: ${SYMFONY_REQUIRE:-6.4.*}
