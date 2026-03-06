@@ -2,8 +2,6 @@
 
 namespace INSYS\Bundle\MaintenanceBundle\Drivers\Query;
 
-use Doctrine\ORM\EntityManager;
-
 /**
  * Abstract class to handle PDO connection
  *
@@ -13,7 +11,7 @@ use Doctrine\ORM\EntityManager;
 abstract class PdoQuery
 {
     /**
-     * @var \PDO
+     * @var \PDO|\Doctrine\DBAL\Connection|null
      */
     protected $db;
 
@@ -60,8 +58,8 @@ abstract class PdoQuery
     /**
      * Result of insert query
      *
-     * @param integer $ttl ttl value
-     * @param \PDO    $db  PDO instance
+     * @param string|null $ttl ttl value
+     * @param \PDO        $db  PDO instance
      *
      * @return boolean
      */
@@ -103,12 +101,10 @@ abstract class PdoQuery
     }
 
     /**
-     * PrepareStatement
-     *
      * @param \PDO   $db    PDO instance
      * @param string $query Query
      *
-     * @return Statement
+     * @return \PDOStatement
      *
      * @throws \RuntimeException
      */
@@ -140,10 +136,6 @@ abstract class PdoQuery
     {
         $stmt = $this->prepareStatement($db, $query);
 
-        if (false === $stmt) {
-            throw new \RuntimeException('The database cannot successfully prepare the statement');
-        }
-
         foreach ($args as $arg => $val) {
             $stmt->bindValue($arg, $val, is_int($val) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
         }
@@ -154,4 +146,3 @@ abstract class PdoQuery
         return $return;
     }
 }
-

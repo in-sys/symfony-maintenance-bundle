@@ -54,12 +54,9 @@ class MemCacheDriver extends AbstractDriver implements DriverTtlInterface
             throw new \InvalidArgumentException('$options[\'port\'] must be an integer if Driver Memcache configuration is used');
         }
 
-        if (null !== $options) {
-            $this->keyName = $options['key_name'];
-            $this->memcacheInstance = new \Memcache;
-            $this->memcacheInstance->connect($options['host'], $options['port']);
-        }
-
+        $this->keyName = $options['key_name'];
+        $this->memcacheInstance = new \Memcache;
+        $this->memcacheInstance->connect($options['host'], $options['port']);
         $this->options = $options;
     }
 
@@ -68,7 +65,7 @@ class MemCacheDriver extends AbstractDriver implements DriverTtlInterface
      */
     protected function createLock()
     {
-        return $this->memcacheInstance->set($this->keyName, self::VALUE_TO_STORE, false, (isset($this->options['ttl']) ? $this->options['ttl'] : 0));
+        return $this->memcacheInstance->set($this->keyName, self::VALUE_TO_STORE, 0, (isset($this->options['ttl']) ? $this->options['ttl'] : 0));
     }
 
     /**

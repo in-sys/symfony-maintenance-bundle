@@ -48,7 +48,7 @@ class INSYSMaintenanceExtension extends Extension
         $container->setParameter('insys_maintenance.response.exception_message', $config['response']['exception_message']);
 
         if (isset($config['driver']['options']['dsn'])) {
-            $this->registerDsnconfiguration($config['driver']['options']);
+            $this->registerDsnConfiguration($config['driver']['options']);
         }
     }
 

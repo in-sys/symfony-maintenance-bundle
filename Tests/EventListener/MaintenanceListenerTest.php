@@ -5,7 +5,6 @@ namespace INSYS\Bundle\MaintenanceBundle\Tests\EventListener;
 use INSYS\Bundle\MaintenanceBundle\Drivers\DriverFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
@@ -37,7 +36,7 @@ class MaintenanceListenerTest extends TestCase
 
         $request = Request::create('http://test.com/foo?bar=baz');
         $kernel = $this->getMockBuilder('Symfony\Component\HttpKernel\HttpKernelInterface')->getMock();
-        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
+        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
 
         $this->container = $this->initContainer();
 
@@ -71,7 +70,7 @@ class MaintenanceListenerTest extends TestCase
 
         $request = Request::create('http://test.com/foo?bar=baz');
         $kernel = $this->getMockBuilder('Symfony\Component\HttpKernel\HttpKernelInterface')->getMock();
-        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
+        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
 
         $this->container = $this->initContainer();
 
@@ -102,7 +101,7 @@ class MaintenanceListenerTest extends TestCase
 
         $request = Request::create('http://test.com/foo?bar=baz');
         $kernel = $this->getMockBuilder('Symfony\Component\HttpKernel\HttpKernelInterface')->getMock();
-        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
+        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
 
         $this->container = $this->initContainer();
 
@@ -136,7 +135,7 @@ class MaintenanceListenerTest extends TestCase
 
         $request = Request::create('http://test.com/foo?bar=baz');
         $kernel = $this->getMockBuilder('Symfony\Component\HttpKernel\HttpKernelInterface')->getMock();
-        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
+        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
 
         $this->container = $this->initContainer();
 
@@ -170,14 +169,14 @@ class MaintenanceListenerTest extends TestCase
         $request->attributes->set('_route', $route);
 
         $kernel = $this->getMockBuilder('Symfony\Component\HttpKernel\HttpKernelInterface')->getMock();
-        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
+        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
 
         $this->container = $this->initContainer();
 
         $this->factory = new DriverFactory($this->getDatabaseDriver(true), $this->getTranslator(), $driverOptions);
         $this->container->set('insys_maintenance.driver.factory', $this->factory);
 
-        $listener = new MaintenanceListenerTestWrapper($this->factory, null, null, null, array(), array(), $debug);
+        $listener = new MaintenanceListenerTestWrapper($this->factory, null, null, null, array(), array(), null, array(), null, null, '', $debug);
 
         $info = sprintf('Should be %s route %s with when we are %s debug env',
             $expected === true ? 'allow' : 'deny',
@@ -188,7 +187,7 @@ class MaintenanceListenerTest extends TestCase
         $this->assertTrue($listener->onKernelRequest($event) === $expected, $info);
     }
 
-    public function routeProviderWithDebugContext()
+    public static function routeProviderWithDebugContext()
     {
         $debug = array(true, false);
         $routes = array('route_1', '_route_started_with_underscore');
@@ -197,7 +196,7 @@ class MaintenanceListenerTest extends TestCase
 
         foreach ($debug as $isDebug) {
             foreach ($routes as $route) {
-                $data[] = array($isDebug, $route, (true === $isDebug && '_' === $route[0]) ? false : true);
+                $data[] = array($isDebug, $route, (true === $isDebug && '_' === $route[0]));
             }
         }
 
@@ -217,8 +216,8 @@ class MaintenanceListenerTest extends TestCase
         $request = Request::create('http://test.com/foo?bar=baz');
         $postRequest = Request::create('http://test.com/foo?bar=baz', 'POST');
         $kernel = $this->getMockBuilder('Symfony\Component\HttpKernel\HttpKernelInterface')->getMock();
-        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
-        $postEvent = new RequestEvent($kernel, $postRequest, HttpKernelInterface::MASTER_REQUEST);
+        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
+        $postEvent = new RequestEvent($kernel, $postRequest, HttpKernelInterface::MAIN_REQUEST);
 
         $this->container = $this->initContainer();
 
@@ -258,7 +257,7 @@ class MaintenanceListenerTest extends TestCase
 
         $request = Request::create('http://test.com/foo', 'GET', array(), array('bar' => 'baz'));
         $kernel = $this->getMockBuilder('Symfony\Component\HttpKernel\HttpKernelInterface')->getMock();
-        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
+        $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
 
         $this->container = $this->initContainer();
 
@@ -336,7 +335,7 @@ class MaintenanceListenerTest extends TestCase
     /**
      * Get Translator
      *
-     * @return MockObject&Translator
+     * @return MockObject&TranslatorInterface
      */
     public function getTranslator()
     {

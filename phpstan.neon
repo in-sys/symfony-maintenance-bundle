@@ -1,0 +1,11 @@
+parameters:
+    level: 5
+    paths:
+        - Command
+        - DependencyInjection
+        - Drivers
+        - Exception
+        - Listener
+
+includes:
+    - vendor/phpstan/phpstan-symfony/extension.neon

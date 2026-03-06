@@ -2,8 +2,6 @@
 
 namespace INSYS\Bundle\MaintenanceBundle\Drivers;
 
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**

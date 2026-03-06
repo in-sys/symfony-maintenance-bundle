@@ -4,8 +4,11 @@ namespace INSYS\Bundle\MaintenanceBundle\Command;
 
 use INSYS\Bundle\MaintenanceBundle\Drivers\DriverFactory;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\FormatterHelper;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * Create an unlock action
@@ -27,7 +30,7 @@ class DriverUnlockCommand extends Command
     /**
      * {@inheritdoc}
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('insys:maintenance:unlock')
@@ -43,7 +46,7 @@ EOT
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->confirmUnlock($input, $output)) {
             return 1;
@@ -58,16 +61,12 @@ EOT
         return 0;
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return bool
-     */
-    protected function confirmUnlock(InputInterface $input, OutputInterface $output)
+    protected function confirmUnlock(InputInterface $input, OutputInterface $output): bool
     {
+        /** @var FormatterHelper $formatter */
         $formatter = $this->getHelperSet()->get('formatter');
 
-        if ($input->getOption('no-interaction', false)) {
+        if (!$input->isInteractive()) {
             $confirmation = true;
         } else {
             // confirm
@@ -91,22 +90,11 @@ EOT
         return $confirmation;
     }
 
-    /**
-     * This method ensure that we stay compatible with symfony console 2.3 by using the deprecated dialog helper
-     * but use the ConfirmationQuestion when available.
-     *
-     * @param $question
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return mixed
-     */
-    protected function askConfirmation($question, InputInterface $input, OutputInterface $output) {
-        if (!$this->getHelperSet()->has('question')) {
-            return $this->getHelper('dialog')
-                ->askConfirmation($output, '<question>' . $question . '</question>', 'y');
-        }
+    protected function askConfirmation(string $question, InputInterface $input, OutputInterface $output): bool
+    {
+        /** @var QuestionHelper $helper */
+        $helper = $this->getHelper('question');
 
-        return $this->getHelper('question')
-            ->ask($input, $output, new \Symfony\Component\Console\Question\ConfirmationQuestion($question));
+        return (bool) $helper->ask($input, $output, new ConfirmationQuestion($question));
     }
 }

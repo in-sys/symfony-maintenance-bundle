@@ -7,9 +7,13 @@ use INSYS\Bundle\MaintenanceBundle\Drivers\DriverFactory;
 use INSYS\Bundle\MaintenanceBundle\Drivers\DriverTtlInterface;
 
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\FormatterHelper;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Symfony\Component\Console\Question\Question;
 
 /**
  * Create a lock action
@@ -33,7 +37,7 @@ class DriverLockCommand extends Command
     /**
      * {@inheritdoc}
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('insys:maintenance:lock')
@@ -59,7 +63,7 @@ EOT
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $driver = $this->getDriver();
 
@@ -88,11 +92,12 @@ EOT
     /**
      * {@inheritdoc}
      */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         $driver = $this->getDriver();
         $default = $driver->getOptions();
 
+        /** @var FormatterHelper $formatter */
         $formatter = $this->getHelperSet()->get('formatter');
 
         if (null !== $input->getArgument('ttl') && !is_numeric($input->getArgument('ttl'))) {
@@ -115,21 +120,21 @@ EOT
                     '',
                 ));
 
-                $ttl = $this->askAndValidate(
-                    $input,
-                    $output,
+                $question = new Question(
                     sprintf('<info>%s</info> [<comment>Default value in your configuration: %s</comment>]%s ', 'Set time', $driver->hasTtl() ? $driver->getTtl() : 'unlimited', ':'),
-                    function($value) use ($default) {
-                        if (!is_numeric($value) && null === $default) {
-                            return null;
-                        } elseif (!is_numeric($value)) {
-                            throw new \InvalidArgumentException('Time must be an integer');
-                        }
-                        return $value;
-                    },
-                    1,
                     isset($default['ttl']) ? $default['ttl'] : 0
                 );
+                $question->setValidator(function($value) {
+                    if (!is_numeric($value)) {
+                        throw new \InvalidArgumentException('Time must be an integer');
+                    }
+                    return $value;
+                });
+                $question->setMaxAttempts(1);
+
+                /** @var QuestionHelper $questionHelper */
+                $questionHelper = $this->getHelper('question');
+                $ttl = $questionHelper->ask($input, $output, $question);
             }
 
             $ttl = (int) $ttl;
@@ -144,8 +149,6 @@ EOT
     }
 
     /**
-     * Get driver
-     *
      * @return AbstractDriver
      */
     private function getDriver()
@@ -153,48 +156,11 @@ EOT
         return $this->driverFactory->getDriver();
     }
 
-    /**
-     * This method ensure that we stay compatible with symfony console 2.3 by using the deprecated dialog helper
-     * but use the ConfirmationQuestion when available.
-     *
-     * @param $question
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return mixed
-     */
-    protected function askConfirmation($question, InputInterface $input, OutputInterface $output) {
-        if (!$this->getHelperSet()->has('question')) {
-            return $this->getHelper('dialog')
-                ->askConfirmation($output, '<question>' . $question . '</question>', 'y');
-        }
+    protected function askConfirmation(string $question, InputInterface $input, OutputInterface $output): bool
+    {
+        /** @var QuestionHelper $helper */
+        $helper = $this->getHelper('question');
 
-        return $this->getHelper('question')
-            ->ask($input, $output, new \Symfony\Component\Console\Question\ConfirmationQuestion($question));
-    }
-
-    /**
-     * This method ensure that we stay compatible with symfony console 2.3 by using the deprecated dialog helper
-     * but use the ConfirmationQuestion when available.
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @param $question
-     * @param $validator
-     * @param int $attempts
-     * @param null $default
-     * @return mixed
-     */
-    protected function askAndValidate(InputInterface $input, OutputInterface $output, $question, $validator, $attempts = 1, $default = null) {
-        if (!$this->getHelperSet()->has('question')) {
-            return $this->getHelper('dialog')
-                ->askAndValidate($output, $question, $validator, $attempts, $default);
-        }
-
-        $question = new \Symfony\Component\Console\Question\Question($question, $default);
-        $question->setValidator($validator);
-        $question->setMaxAttempts($attempts);
-
-        return $this->getHelper('question')
-            ->ask($input, $output, $question);
+        return (bool) $helper->ask($input, $output, new ConfirmationQuestion($question));
     }
 }

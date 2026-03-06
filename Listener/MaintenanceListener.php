@@ -7,7 +7,6 @@ use INSYS\Bundle\MaintenanceBundle\Exception\ServiceUnavailableException;
 
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpFoundation\IpUtils;
 
 /**
@@ -24,13 +23,6 @@ class MaintenanceListener
      * @var \INSYS\Bundle\MaintenanceBundle\Drivers\DriverFactory
      */
     protected $driverFactory;
-
-    /**
-     * Authorized data
-     *
-     * @var array
-     */
-    protected $authorizedIps;
 
     /**
      * @var null|String
@@ -157,27 +149,21 @@ class MaintenanceListener
 
         $request = $event->getRequest();
 
-        if (is_array($this->query)) {
-            foreach ($this->query as $key => $pattern) {
-                if (!empty($pattern) && preg_match('{'.$pattern.'}', $request->get($key))) {
-                    return;
-                }
+        foreach ($this->query as $key => $pattern) {
+            if (!empty($pattern) && preg_match('{'.$pattern.'}', $request->get($key))) {
+                return;
             }
         }
 
-        if (is_array($this->cookie)) {
-            foreach ($this->cookie as $key => $pattern) {
-                if (!empty($pattern) && preg_match('{'.$pattern.'}', $request->cookies->get($key))) {
-                    return;
-                }
+        foreach ($this->cookie as $key => $pattern) {
+            if (!empty($pattern) && preg_match('{'.$pattern.'}', $request->cookies->get($key))) {
+                return;
             }
         }
 
-        if (is_array($this->attributes)) {
-            foreach ($this->attributes as $key => $pattern) {
-                if (!empty($pattern) && preg_match('{'.$pattern.'}', $request->attributes->get($key))) {
-                    return;
-                }
+        foreach ($this->attributes as $key => $pattern) {
+            if (!empty($pattern) && preg_match('{'.$pattern.'}', $request->attributes->get($key))) {
+                return;
             }
         }
 
@@ -194,14 +180,14 @@ class MaintenanceListener
         }
 
         $route = $request->get('_route');
-        if (null !== $this->route && preg_match('{'.$this->route.'}', $route)  || (true === $this->debug && '_' === $route[0])) {
+        if ((null !== $this->route && null !== $route && preg_match('{'.$this->route.'}', $route)) || (true === $this->debug && null !== $route && '_' === $route[0])) {
             return;
         }
 
         // Get driver class defined in your configuration
         $driver = $this->driverFactory->getDriver();
 
-        if ($driver->decide() && HttpKernelInterface::MASTER_REQUEST === $event->getRequestType()) {
+        if ($driver->decide()) {
             $this->handleResponse = true;
             throw new ServiceUnavailableException($this->http_exception_message);
         }

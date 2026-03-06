@@ -2,8 +2,6 @@
 
 namespace INSYS\Bundle\MaintenanceBundle\Drivers\Query;
 
-use Doctrine\ORM\EntityManager;
-
 /**
  * Class for handle database with a dsn connection
  *

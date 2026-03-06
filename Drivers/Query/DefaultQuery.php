@@ -2,7 +2,7 @@
 
 namespace INSYS\Bundle\MaintenanceBundle\Drivers\Query;
 
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Default Class for handle database with a doctrine connection
@@ -13,16 +13,16 @@ use Doctrine\ORM\EntityManager;
 class DefaultQuery extends PdoQuery
 {
     /**
-     * @var EntityManager
+     * @var EntityManagerInterface
      */
     protected $em;
 
     const NAME_TABLE   = 'insys_maintenance';
 
     /**
-     * @param EntityManager $em Entity Manager
+     * @param EntityManagerInterface $em Entity Manager
      */
-    public function __construct(EntityManager $em)
+    public function __construct(EntityManagerInterface $em)
     {
         $this->em = $em;
     }
@@ -46,7 +46,8 @@ class DefaultQuery extends PdoQuery
      */
     public function createTableQuery()
     {
-        $type = $this->em->getConnection()->getDatabasePlatform()->getName() != 'mysql' ? 'timestamp' : 'datetime';
+        $platform = $this->em->getConnection()->getDatabasePlatform();
+        $type = $platform instanceof \Doctrine\DBAL\Platforms\MySQLPlatform ? 'datetime' : 'timestamp';
 
         $this->db->exec(
             sprintf('CREATE TABLE IF NOT EXISTS %s (ttl %s DEFAULT NULL)', self::NAME_TABLE, $type)

@@ -1,7 +1,7 @@
 {
     "name": "in-sys/symfony-maintenance-bundle",
     "type": "symfony-bundle",
-    "description": "This bundle allows you to place your website in maintenance mode by calling two commands from your console. Symfony 5.4 / 6",
+    "description": "This bundle allows you to place your website in maintenance mode by calling two commands from your console. Symfony 6.4 / 7",
     "homepage": "https://github.com/in-sys/symfony-maintenance-bundle",
     "license": "MIT",
     "authors": [
@@ -23,18 +23,28 @@
         }
     ],
     "require": {
-        "php": "^8.0||^8.1",
-        "symfony/console": "^5.4||^6.0",
-        "symfony/framework-bundle": "^5.4||^6.0",
-        "symfony/translation": "^5.4||^6.0",
-        "symfony/translation-contracts": "^2.0||^2.3"
+        "php": "^8.1",
+        "symfony/console": "^6.4||^7.0",
+        "symfony/framework-bundle": "^6.4||^7.0",
+        "symfony/translation": "^6.4||^7.0",
+        "symfony/translation-contracts": "^3.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "8.5.*"
+        "doctrine/dbal": "^3.6||^4.0",
+        "doctrine/orm": "^2.14||^3.0",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^10.0||^11.0"
     },
     "autoload": {
         "psr-4": {
             "INSYS\\Bundle\\MaintenanceBundle\\": ""
+        }
+    },
+    "config": {
+        "audit": {
+            "abandoned": "report",
+            "block-insecure": false
         }
     },
     "scripts": {
@@ -42,5 +52,5 @@
             "vendor/bin/phpunit"
         ]
     },
-    "version": "1.0.2"
+    "version": "2.0.0"
 }

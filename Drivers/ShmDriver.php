@@ -33,27 +33,25 @@ class ShmDriver extends AbstractDriver
 
 
     /**
-     * Shared memory block ID
-     *
-     * @var resource
+     * @var \SysvSharedMemory|null
      */
-    protected $shmId;
+    protected $shmId = null;
 
     /**
      * Constructor shmDriver
      *
-     * @param Translator $translator Translator service
-     * @param array      $options    Options driver
+     * @param array $options Options driver
      */
-    public function __construct($translator, array $options = array())
+    public function __construct(array $options = array())
     {
-        parent::__construct($translator, $options);
+        parent::__construct($options);
 
         $key = ftok(__FILE__, 'm');
-        $this->shmId = shm_attach($key, 100, 0666);
-        if (!$this->shmId) {
+        $shm = shm_attach($key, 100, 0666);
+        if ($shm === false) {
             throw new \RuntimeException('Can\'t allocate shared memory');
         }
+        $this->shmId = $shm;
         $this->options = $options;
     }
 
@@ -62,7 +60,7 @@ class ShmDriver extends AbstractDriver
      */
     public function __destruct()
     {
-        if ($this->shmId) {
+        if ($this->shmId !== null) {
             shm_detach($this->shmId);
         }
     }
@@ -72,11 +70,11 @@ class ShmDriver extends AbstractDriver
      */
     protected function createLock()
     {
-        if ($this->shmId) {
-            return shm_put_var($this->shmId, self::VARIABLE_KEY, self::VALUE_TO_STORE);
+        if ($this->shmId === null) {
+            return false;
         }
 
-        return false;
+        return shm_put_var($this->shmId, self::VARIABLE_KEY, self::VALUE_TO_STORE);
     }
 
     /**
@@ -84,11 +82,11 @@ class ShmDriver extends AbstractDriver
      */
     protected function createUnlock()
     {
-        if ($this->shmId) {
-            return shm_remove_var($this->shmId, self::VARIABLE_KEY);
+        if ($this->shmId === null) {
+            return false;
         }
 
-        return false;
+        return shm_remove_var($this->shmId, self::VARIABLE_KEY);
     }
 
     /**
@@ -96,15 +94,16 @@ class ShmDriver extends AbstractDriver
      */
     public function isExists()
     {
-        if ($this->shmId) {
-            if (!shm_has_var($this->shmId, self::VARIABLE_KEY) ) {
-                return false;
-            }
-            $data = shm_get_var($this->shmId, self::VARIABLE_KEY);
-            return ($data == self::VALUE_TO_STORE);
+        if ($this->shmId === null) {
+            return false;
         }
 
-        return false;
+        if (!shm_has_var($this->shmId, self::VARIABLE_KEY)) {
+            return false;
+        }
+
+        $data = shm_get_var($this->shmId, self::VARIABLE_KEY);
+        return ($data == self::VALUE_TO_STORE);
     }
 
     /**
